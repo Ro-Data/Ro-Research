@@ -9,7 +9,7 @@ temp <- broadband %>%
 
 broadband_1 <- na.omit(temp)
 
-#STEP 4: We checked correlations to identify any multicolinearity concerns (exclude State variable, won't work w piping)
+#STEP 4: We checked correlations to identify any multicolinearity concerns
 
 corr_check <- broadband_1 %>% dplyr::select(-State) 
 
@@ -30,7 +30,6 @@ ggplot(broadband_1, aes(x=num_accounts))+
 
 #STEP 7: Then, we looked at a boxplot. We noticed that there were some outlying values
 
-Boxplot (looks bad..., outlier problems)
 ggplot(broadband_1) +
   aes(x = as.factor(broad_cat), y = num_accounts) +
   geom_boxplot() +
