@@ -26,7 +26,7 @@ ggplot(broadband_1, aes(x=num_accounts))+
   xlim(0, 350) + 
   ylim(0, 150)
 
-#We are dealing with count data, and as expected, the distribution looked very poisson like
+#We are dealing with count data, and as expected, the distribution looked very poisson-like
 
 #STEP 7: Then, we looked at a boxplot. We noticed that there were some outlying values
 
