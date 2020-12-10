@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  div.tooltip {
+    position: absolute;
+    background-color: white;
+    max-width; 200px;
+    height: auto;
+    padding: 1px;
+    border-style: solid;
+    border-radius: 4px;
+    border-width: 1px;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, .5);
+    pointer-events: none;
+  }
+  .links, .nodes {
+    cursor: pointer;
+  }
+</style>
+<svg
+  width="900"
+  height="600"
+  style="background: #f9f9f9; font-family: sans-serif; font-size: 13px"
+>
+</svg>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+var nodes = [
+  { id: "metsyn", group: 0, label: "Weight-Related Conditions",  description: "123", level: 1, population: 2e12, 'fx': 700, 'fy': 450},
+  { id: "eczema"  , group: 2, label: "Eczema" , description: "456", level: 2, population: 4e5, 'fx': 700, 'fy': 200},
+  { id: "allergies"  , group: 2, label: "Allergies" , level: 5, population: 4e6, 'fx': 600, 'fy': 100},
+  { id: "acne"  , group: 2, label: "Acne" , level: 2, population: 1e5, 'fx': 550, 'fy': 300},
+  { id: "herpes"  , group: 2, label: "Herpes (HSV-1 & 2)" , level: 2, population: 3e6, 'fx': 300, 'fy': 300},
+  { id: "ed"  , group: 2, label: "Erectile Dysfunction" , level: 2, population: 2e7, 'fx': 200, 'fy': 500},
+  { id: "pe"  , group: 2, label: "Premature Ejaculation" , level: 5, population: 1e6, 'fx': 100, 'fy': 600},
+  { id: "lowT"  , group: 2, label: "Testosterone Health" , level: 2, population: 3e5, 'fx': 650, 'fy': 800},
+  { id: "bph"  , group: 2, label: "Benign Prostate Hyperplasia" , level: 2, population: 1e6, 'fx': 750, 'fy': 750},
+  { id: "menopause"  , group: 2, label: "Menopause" , level: 4, population: 2e7, 'fx': 1000, 'fy': 500},
+  { id: "hair"  , group: 2, label: "Hair Loss" , level: 4, population: 2e5, 'fx': 1400, 'fy': 200},
+  { id: "depression"  , group: 2, label: "Depression" , level: 4, population: 2e7, 'fx': 900, 'fy': 700},
+  { id: "anxiety"  , group: 2, label: "Anxiety" , level: 4, population: 1e5, 'fx': 1100, 'fy': 700},
+  { id: "hyperhidrosis"  , group: 2, label: "Hyperhidrosis" , level: 3, population: 1e5, 'fx': 900, 'fy': 200},
+
+]
+
+
+var links = [
+  { target:"metsyn", source: "ed", strength: 0.1, value: 10},
+  { target: "pe", source: "ed", strength: 0.8, value:5},
+  { target: "metsyn", source: "hair", strength: 0.1, value: 7},
+  { target: "eczema", source: "metsyn", strength: 0.1, value: 8},
+  { target: "herpes", source: "metsyn", strength: 0.1, value: 4},
+  { target: "menopause", source: "metsyn", strength: 1, value: 4},
+  { target: "acne", source: "metsyn", strength: 0.8, value: 4},
+  { target: "hyperhidrosis", source: "metsyn", strength: 0.8, value: 10},
+  { target: "allergies", source: "eczema", strength: 0.8, value: 6},
+  { target: "metsyn", source: "eczema", strength: 0.8, value: 4},
+  { target: "lowT", source: "metsyn", strength: 0.1, value: 4},
+  { target: "bph", source: "metsyn", strength: 0.1, value: 4},
+  { target: "bph", source: "lowT", strength: 0.8, value: 2},
+  { target: "depression", source: "metsyn", strength: 0.1, value: 4},
+  { target: "anxiety", source: "metsyn", strength: 0.1, value: 7},
+  { target: "anxiety", source: "depression", strength: 0.1, value: 4},
+]
+
+function getNeighbors(node) {
+  return links.reduce(function (neighbors, link) {
+      if (link.target.id === node.id) {
+        neighbors.push(link.source.id)
+      } else if (link.source.id === node.id) {
+        neighbors.push(link.target.id)
+      }
+      return neighbors
+    },
+    [node.id]
+  )
+}
+
+function isNeighborLink(node, link) {
+  return link.target.id === node.id || link.source.id === node.id
+}
+
+
+function getNodeColor(node, neighbors) {
+  if (Array.isArray(neighbors) && neighbors.indexOf(node.id) > -1) { //-1 defines the level of neighbor that turns color (e.g. 0th neighbor is itself)
+    //click
+    if (node.level === 1) {
+    return 'rgb(250, 202, 140)'
+    }
+    if (node.level === 2) {
+    return 'rgb(250, 202, 223)'
+    }
+    if (node.level === 3) {
+    return 'rgb(233, 140, 250)'
+    }
+    if (node.level === 4) {
+    return 'rgb(145, 182, 242)'
+    }
+    if (node.level === 5) {
+    return 'rgb(214, 212, 212)'
+    }
+
+  }
+  return node.level === 1 ? 'rgb(214, 212, 212)' : 'rgb(214, 212, 212)' //default
+}
+
+//added
+function getNodeRadius (node) {
+  return Math.log10(node.population) * 7
+}
+
+function getLinkColor(node, link) {
+  return isNeighborLink(node, link) ? 'rgb(143, 152, 156)' : '#E5E5E5'
+}
+
+//added
+function getLinkWidth(node, link) {
+  return isNeighborLink(node, link) ? 3 : 1;
+}
+
+function getTextColor(node, neighbors) {
+  return 'black';
+  // return Array.isArray(neighbors) && neighbors.indexOf(node.id) > -1 ? 'green' : 'black'
+}
+
+var width = window.innerWidth
+var height = window.innerHeight
+
+var svg = d3.select('svg')
+svg.attr('width', width).attr('height', height)
+
+
+// simulation setup with all forces
+var linkForce = d3
+  .forceLink()
+  .id(function (link) { return link.id })
+  .strength(function (link) { return link.strength / 50 })
+
+var manyBody = d3
+  .forceManyBody()
+  .strength(-Math.min(width, height) / 2)
+
+var simulation = d3
+  .forceSimulation()
+  .force('link', linkForce)
+  .force('charge', manyBody)
+  .force('center', d3.forceCenter(width / 2, height / 2))
+  .alphaDecay(0.1);
+
+var dragDrop = d3.drag().on('start', function (node) {
+  node.fx = node.x
+  node.fy = node.y
+}).on('drag', function (node) {
+  simulation.velocityDecay(0.8).restart()
+  node.fx = d3.event.x
+  node.fy = d3.event.y
+}).on('end', function (node) {
+  if (!d3.event.active) {
+    simulation.alphaTarget(0)
+  }
+  node.fx = null
+  node.fy = null
+})
+
+function selectNode(selectedNode) {
+  var neighbors = getNeighbors(selectedNode)
+
+  // we modify the styles to highlight selected nodes
+  nodeElements.attr('fill', function (node) { return getNodeColor(node, neighbors) })
+  textElements.attr('fill', function (node) { return getTextColor(node, neighbors) })
+  linkElements.attr('stroke', function (link) { return getLinkColor(selectedNode, link) })
+}
+
+//added
+var tooltip = d3.select("body")
+	.append("div")
+	.attr("class", "tooltip")
+	.style("opacity", 0)
+var linkElements = svg.append("g")
+  .attr("class", "links")
+  .selectAll("line")
+  .data(links)
+  .enter().append("line")
+    .attr("stroke-width", function(d) { return d.value; })
+	  .attr("stroke", "rgba(50, 50, 50, 0.2)")
+
+//changed
+var nodeElements = svg.append("g")
+  .attr("class", "nodes")
+  .selectAll("circle")
+  .data(nodes)
+  .enter().append("circle")
+    .attr("r", getNodeRadius)
+    .attr("fill", getNodeColor)
+    .call(dragDrop)
+    .on("mouseover", selectNode)
+    .on('click.tooltip', function(d) {
+      	tooltip.transition()
+        	.duration(300)
+        	.style("opacity", .8);
+      	tooltip.html(return node.description)
+        	.style("left", (d3.event.pageX) + "px")
+        	.style("top", (d3.event.pageY + 10) + "px");
+    	})
+
+var textElements = svg.append("g")
+  .attr("class", "texts")
+  .selectAll("text")
+  .data(nodes)
+  .enter().append("text")
+    .html(function (node) {
+      return node.label.split(' ').map(function (part) {
+        return '<tspan dy="1.2em">' + part + '</tspan>'
+      }).join('')
+    })
+	.attr("dx", 0)
+    .attr("dy", 0)
+
+simulation.nodes(nodes).on('tick', () => {
+  nodeElements
+    .attr('cx', function (node) { return node.x })
+    .attr('cy', function (node) { return node.y })
+  textElements
+    .attr('x', function (node) { return node.x - getNodeRadius(node) / 2 })
+    .attr('y', function (node) { return node.y - 10 * node.label.split(' ').length })
+    .selectAll('tspan').attr('x', function(t) { return this.parentNode.getAttribute('x') })
+
+  linkElements
+    .attr('x1', function (link) { return link.source.x })
+    .attr('y1', function (link) { return link.source.y })
+    .attr('x2', function (link) { return link.target.x })
+    .attr('y2', function (link) { return link.target.y })
+})
+
+simulation.force("link").links(links)
+</script>
